@@ -22,6 +22,7 @@ int _curBrightness = 0;   // how bright the LED is
 void setup() {
   // set the LED pin to as an output
   pinMode(LED_OUTPUT_PIN, OUTPUT);
+  Serial.begin(9600); // for using Serial.println
 }
 
 // The loop function runs over and over again forever
@@ -29,6 +30,7 @@ void loop() {
   
   // set the brightness of the LED pin
   analogWrite(LED_OUTPUT_PIN, _curBrightness);
+  Serial.println(_curBrightness); // print out current brightness
 
   // change the brightness for next time through the loop
   _curBrightness = _curBrightness + _fadeAmount;
