@@ -19,7 +19,6 @@ const int POT_INPUT_PIN = A0;
 
 void setup() {
   pinMode(LED_OUTPUT_PIN, OUTPUT);
-  pinMode(POT_INPUT_PIN, INPUT);
   Serial.begin(9600);
 }
 
