@@ -19,6 +19,8 @@ void setup() {
 
   pinMode(BUTTON_INPUT_PIN_PU, INPUT);
   pinMode(LED_OUTPUT_PIN_PU, OUTPUT);
+
+  Serial.begin(9600);
 }
 
 void loop() {
@@ -38,6 +40,16 @@ void loop() {
   // to a pull-up resistor (that is, when the button is pressed, the signal goes LOW but
   // we want to illuminate our LED when the button is pressed).
   digitalWrite(LED_OUTPUT_PIN_PU, !buttonValPU);
+
+  // Print values to serial
+  Serial.print("pull-down button=");
+  Serial.print(buttonValPD);
+  Serial.print(" led=");
+  Serial.print(buttonValPD);
+  Serial.print("\tpull-up button=");
+  Serial.print(buttonValPU);
+  Serial.print(" led=");
+  Serial.println(!buttonValPU);
   
   // Check for new input every 100ms (10 times a sec)
   delay(100);

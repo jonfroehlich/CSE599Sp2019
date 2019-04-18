@@ -12,6 +12,7 @@ const int LED_OUTPUT_PIN = 3;
 void setup() {
   pinMode(BUTTON_INPUT_PIN, INPUT);
   pinMode(LED_OUTPUT_PIN, OUTPUT);
+  Serial.begin(9600);
 }
 
 void loop() {
@@ -22,6 +23,7 @@ void loop() {
 
   // Write out HIGH or LOW
   digitalWrite(LED_OUTPUT_PIN, buttonVal);
+  Serial.println(buttonVal);
   
   // Check for new input every 100ms (10 times a sec)
   delay(100);
