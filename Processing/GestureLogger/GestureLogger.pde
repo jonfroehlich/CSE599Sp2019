@@ -5,11 +5,19 @@
 // - Shows capture snapshot?
 // - Maybe save Arduino time, Processing timestamp too?
 // - Draw axes? If so, need rectangular boundary to draw data < full width/height of window
-// - Write out save file name after gesture finished recording
+// - Write out save file name after gesture finished recording? Maybe put in GestureAnnotation overlay
 // - [Fixed] Looks like data not being removed from array
+
+// Appending text to a file: 
+//  - https://stackoverflow.com/questions/17010222/how-do-i-append-text-to-a-csv-txt-file-in-processing
+//  - https://docs.oracle.com/javase/7/docs/api/java/io/FileWriter.html
+//  - Use sketchPath(string) to store in local sketch folder: https://stackoverflow.com/a/36531925
 import processing.serial.*;
 import java.awt.Rectangle;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 
+final String GESTURE_DIR_NAME = "Gestures";
 final int YAXIS_MIN = 0; // minimum y value to graph
 final int YAXIS_MAX = 1023; // maximum y value to graph
 final color XCOLOR = color(255, 61, 0, 200);
@@ -29,7 +37,12 @@ Serial _serialPort;
 
 final int _timeWindowMs = 1000 * 30; // 30 secs
 long _currentXMin;
-ArrayList<AccelSensorData> _displaySensorData =  new ArrayList<AccelSensorData>(_timeWindowMs);
+ArrayList<AccelSensorData> _displaySensorData =  new ArrayList<AccelSensorData>();
+ArrayList<GestureAnnotation> _displayGestureAnnotations = new ArrayList<GestureAnnotation>();
+
+PrintWriter _printWriterAllData;
+
+//GestureRecording _gestureRecording = null
 
 final int COUNTDOWN_TIME_MS = 4 * 1000;
 long _timestampStartCountdownMs = -1;
@@ -54,6 +67,19 @@ void setup() {
   int legendXBuffer = 10;
   int legendYBuffer = 5;
   _legendRect = new Rectangle(width - legendWidth - legendXBuffer, legendYBuffer, legendWidth, legendHeight);
+  
+  String filenameNoPath = "fulldata.csv";
+  File fDir = new File(sketchPath(GESTURE_DIR_NAME));
+  if(!fDir.exists()){
+    fDir.mkdirs(); 
+  }
+  File file = new File(fDir,filenameNoPath); 
+     
+  try {
+    _printWriterAllData = new PrintWriter(new BufferedWriter(new FileWriter(file, true)));
+  }catch (IOException e){
+    e.printStackTrace();
+  }
 
   noLoop(); // doesn't automatically loop over draw()
 }
@@ -77,21 +103,16 @@ void draw() {
     AccelSensorData lastAccelSensorData = _displaySensorData.get(i - 1);
     AccelSensorData curAccelSensorData = _displaySensorData.get(i);
 
-    drawLine(XCOLOR, lastAccelSensorData.timestamp, lastAccelSensorData.x, curAccelSensorData.timestamp, curAccelSensorData.x);
-    drawLine(YCOLOR, lastAccelSensorData.timestamp, lastAccelSensorData.y, curAccelSensorData.timestamp, curAccelSensorData.y);
-    drawLine(ZCOLOR, lastAccelSensorData.timestamp, lastAccelSensorData.z, curAccelSensorData.timestamp, curAccelSensorData.z);
-    //println(String.format("%d: xMin=%d diff=%d window=%d (%d, %d) (%d, %d)", i, _currentXMin, (lastAccelSensorData.timestamp - _currentXMin), _currentXMin + _timeWindowMs, lastAccelSensorData.timestamp, lastAccelSensorData.x, curAccelSensorData.timestamp, curAccelSensorData.x));
-    //println(String.format("%d: (%.1f, %.1f) (%.1f, %.1f)", i, xLastPixelVal, yLastPixelVal, xCurPixelVal, yCurPixelVal));
+    drawSensorLine(XCOLOR, lastAccelSensorData.timestamp, lastAccelSensorData.x, curAccelSensorData.timestamp, curAccelSensorData.x);
+    drawSensorLine(YCOLOR, lastAccelSensorData.timestamp, lastAccelSensorData.y, curAccelSensorData.timestamp, curAccelSensorData.y);
+    drawSensorLine(ZCOLOR, lastAccelSensorData.timestamp, lastAccelSensorData.z, curAccelSensorData.timestamp, curAccelSensorData.z);
   }
 
   if (_timestampStartCountdownMs != -1) {
     updateAndDrawCountdownTimer();
   }
 
-  if (_recordingGesture) {
-    drawRecordingAnnotation();
-  }
-
+  drawGestureRecordingAnnotations();
   drawLegend(_legendRect);
 }
 
@@ -136,17 +157,40 @@ void drawLegend(Rectangle legendRect) {
   }
 }
 
-void drawRecordingAnnotation() {
-  textSize(20);
-  fill(255);
-  String str = "Gesture: " + "Baseball throw";
-  float xPixelStartGesture = getXPixelFromTimestamp(_timestampRecordingStarted);
-
-  stroke(255);
-  strokeWeight(2);
-  line(xPixelStartGesture, 0, xPixelStartGesture, height);
-
-  text(str, xPixelStartGesture + 2, 20);
+void drawGestureRecordingAnnotations() {
+  
+  while(_displayGestureAnnotations.size() > 0 && 
+        _displayGestureAnnotations.get(0).hasGestureCompleted() &&
+        _displayGestureAnnotations.get(0).endTimestamp < _currentXMin){
+    _displayGestureAnnotations.remove(0);
+  }
+  
+  if(_displayGestureAnnotations.size() <= 0) { return; }
+  
+  for(GestureAnnotation gestureAnnotation : _displayGestureAnnotations){
+    textSize(10);
+    fill(255);
+    stroke(255);
+    strokeWeight(1);
+    
+    String strGesture = "Gesture: \n" + gestureAnnotation.name;
+    float xPixelStartGesture = getXPixelFromTimestamp(gestureAnnotation.startTimestamp);
+    line(xPixelStartGesture, 0, xPixelStartGesture, height);
+    text(strGesture, xPixelStartGesture + 2, 20);  
+    
+    if(gestureAnnotation.hasGestureCompleted()){
+      String strEndGesture = "Gesture End: \n" + gestureAnnotation.name;
+      float xPixelEndGesture = getXPixelFromTimestamp(gestureAnnotation.endTimestamp);
+      
+      noStroke();
+      fill(255, 255, 255, 50);
+      rect(xPixelStartGesture, 0, xPixelEndGesture - xPixelStartGesture, height);
+      
+      stroke(255);
+      line(xPixelEndGesture, 0, xPixelEndGesture, height);
+    }
+  }
+  
 }
 
 void updateAndDrawCountdownTimer() {
@@ -164,6 +208,8 @@ void updateAndDrawCountdownTimer() {
     if (!_recordingGesture) {
       _recordingGesture = true;
       _timestampRecordingStarted = curTimestampMs;
+      GestureAnnotation gestureAnnotation = new GestureAnnotation("Baseball Throw", curTimestampMs);
+      _displayGestureAnnotations.add(gestureAnnotation);
     }
   } else {
     str = String.format("%d", countdownTimeSecs);
@@ -175,7 +221,7 @@ void updateAndDrawCountdownTimer() {
   text(str, width / 2.0 - strWidth / 2.0, height / 2.0 + strHeight / 2.0 - textDescent());
 }
 
-void drawLine(color col, long timestamp1, int sensorVal1, long timestamp2, int sensorVal2) {
+void drawSensorLine(color col, long timestamp1, int sensorVal1, long timestamp2, int sensorVal2) {
   stroke(col);
   strokeWeight(2);
   float xLastPixelVal = getXPixelFromTimestamp(timestamp1);
@@ -199,6 +245,10 @@ void keyPressed() {
       // save gesture!
       _recordingGesture = false;
       _timestampStartCountdownMs = -1;
+      long currentTimestampMs = System.currentTimeMillis();
+      GestureAnnotation curGestureRecording = _displayGestureAnnotations.get(_displayGestureAnnotations.size() - 1);
+      curGestureRecording.endTimestamp = currentTimestampMs;
+      curGestureRecording.save();
     } else {
       // start countdown timer
       _timestampStartCountdownMs = System.currentTimeMillis();
@@ -237,6 +287,8 @@ void serialEvent (Serial myPort) {
         _displaySensorData.remove(0);
       }
 
+      _printWriterAllData.println(accelSensorData.toCsvString());
+      
       redraw();
     }
   }
@@ -245,14 +297,54 @@ void serialEvent (Serial myPort) {
   }
 }
 
+class GestureAnnotation{ // change name
+  public long startTimestamp;
+  public long endTimestamp = -1;
+  public String name;
+  
+  ArrayList<AccelSensorData> listSensorData =  new ArrayList<AccelSensorData>();
+  
+  public GestureAnnotation(String gestureName, long startTimestamp){
+    this.name = gestureName;
+    this.startTimestamp = startTimestamp;
+  }
+  
+  public boolean hasGestureCompleted(){
+    return this.endTimestamp != -1;
+  }
+  
+  public void save(){
+    long currentTimestampMs = System.currentTimeMillis();
+    String filenameNoPath = this.name + "_" + currentTimestampMs + "_" +  this.listSensorData.size() +  ".csv";
+    File fDir = new File(sketchPath(GESTURE_DIR_NAME));
+    if(!fDir.exists()){
+      fDir.mkdirs(); 
+    }
+    File file = new File(fDir,filenameNoPath); 
+       
+    try {
+      PrintWriter printWriter = new PrintWriter(new BufferedWriter(new FileWriter(file, false)));
+      printWriter.println(AccelSensorData.CSV_HEADER);
+      for(AccelSensorData accelSensorData : listSensorData){
+        printWriter.println(accelSensorData.toCsvString());
+      }
+      printWriter.flush();
+      printWriter.close();
+    }catch (IOException e){
+      e.printStackTrace();
+    }
+  }
+}
+
 // Class for the accelerometer data
 class AccelSensorData {
-
+  public final static String CSV_HEADER = "Arduino Timestamp (ms), Processing Timestamp (ms), X, Y, Z";
+  
   public int x;
   public int y;
   public int z;
   public long timestamp;
-  public long arduinoTimestamp = -1; //not used
+  public long arduinoTimestamp;
 
   public AccelSensorData(long timestamp, int x, int y, int z) {
     this.timestamp = timestamp;
@@ -264,6 +356,14 @@ class AccelSensorData {
   // Creates a dynamic array on every call
   public int[] getSensorValues(){
     return new int[] {this.x, this.y, this.z};
+  }
+  
+  public String toCsvHeaderString(){
+    return CSV_HEADER;
+  }
+  
+  public String toCsvString(){
+    return String.format("%d, %d, %d, %d, %d", this.arduinoTimestamp, this.timestamp, this.x, this.y, this.z);
   }
 
   public String toString() { 
