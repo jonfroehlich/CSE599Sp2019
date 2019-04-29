@@ -1,5 +1,8 @@
 /*
- * Reads in the x, y, and z accelerometer values from the ADXL335. See wiring diagram here: 
+ * Reads in the x, y, and z accelerometer values from the ADXL335 and prints the following CSV
+ * to serial: timestamp, x, y, z.
+ * 
+ * See wiring diagram here: 
  * https://learn.adafruit.com/adafruit-analog-accelerometer-breakouts/arduino-wiring
  * 
  * To calibrate the ADXL335, read this tutorial:
