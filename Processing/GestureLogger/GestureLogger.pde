@@ -7,6 +7,7 @@
 // - Draw axes? If so, need rectangular boundary to draw data < full width/height of window
 // - Write out save file name after gesture finished recording? Maybe put in GestureAnnotation overlay
 // - [Fixed] Looks like data not being removed from array
+// - When the window is closed (or closing), flush the printwriter and close it
 
 // Appending text to a file: 
 //  - https://stackoverflow.com/questions/17010222/how-do-i-append-text-to-a-csv-txt-file-in-processing
@@ -24,7 +25,7 @@ final color XCOLOR = color(255, 61, 0, 200);
 final color YCOLOR = color(73, 164, 239, 200);
 final color ZCOLOR = color(255, 183, 0, 200);
 final color [] SENSOR_VALUE_COLORS = { XCOLOR, YCOLOR, ZCOLOR };
-final color DEFAULT_BACKGROUND_COLOR = color(88, 83, 82);
+final color DEFAULT_BACKGROUND_COLOR = color(44, 42, 41);
 //final color RECORDING_BACKGROUND_COLOR = color(255, 222, 222);
 final color RECORDING_BACKGROUND_COLOR = color(40, 0, 0);
 
@@ -32,13 +33,20 @@ final int MIN_SENSOR_VAL = 0;
 final int MAX_SENSOR_VAL = 1023;
 final int ARDUINO_SERIAL_PORT_INDEX = 3; // our serial port index
 
+final int NUM_SAMPLES_TO_RECORD_PER_GESTURE = 2;
+final String [] GESTURES = { "Backhand Tennis", "Forehand Tennis", "Underhand Bowling", 
+                             "Baseball Throw", "Midair Clockwise 'O'", "At Rest", "Midair Counter-clockwise 'O'",
+                             "Midair Zorro 'Z'", "Midair 'S'", "Shake", "Custom" };
+int _curGestureIndex = 0;
+HashMap<String, Integer> _mapGestureNameToRecordedCount = new HashMap<String, Integer>();
+
 // The serial port is necessary to read data in from the Arduino
 Serial _serialPort;
 
 final int _timeWindowMs = 1000 * 30; // 30 secs
 long _currentXMin;
 ArrayList<AccelSensorData> _displaySensorData =  new ArrayList<AccelSensorData>();
-ArrayList<GestureAnnotation> _displayGestureAnnotations = new ArrayList<GestureAnnotation>();
+ArrayList<GestureRecording> _gestureRecordings = new ArrayList<GestureRecording>();
 
 PrintWriter _printWriterAllData;
 
@@ -52,7 +60,7 @@ long _timestampRecordingStarted = -1;
 Rectangle _legendRect;
 
 void setup() {
-  size(1000, 480);
+  size(1024, 576);
 
   // Open the serial port
   _serialPort = new Serial(this, Serial.list()[ARDUINO_SERIAL_PORT_INDEX], 9600);
@@ -66,7 +74,9 @@ void setup() {
   int legendWidth = 200;
   int legendXBuffer = 10;
   int legendYBuffer = 5;
-  _legendRect = new Rectangle(width - legendWidth - legendXBuffer, legendYBuffer, legendWidth, legendHeight);
+  
+  //_legendRect = new Rectangle(width - legendWidth - legendXBuffer, legendYBuffer, legendWidth, legendHeight); // legend at top-right
+  _legendRect = new Rectangle(legendXBuffer, legendYBuffer, legendWidth, legendHeight); // legend at top-left
   
   String filenameNoPath = "fulldata.csv";
   File fDir = new File(sketchPath(GESTURE_DIR_NAME));
@@ -110,12 +120,45 @@ void draw() {
 
   if (_timestampStartCountdownMs != -1) {
     updateAndDrawCountdownTimer();
+  }else{
+    drawInstructions(); 
   }
 
   drawGestureRecordingAnnotations();
   drawLegend(_legendRect);
+  //drawRecordedGesturesStatus();
 }
 
+/**
+ * Converts a sensor value to a y-pixel value and returns the y-pixel value
+ */
+float getYPixelFromSensorVal(int sensorVal) {
+  return map(sensorVal, MIN_SENSOR_VAL, MAX_SENSOR_VAL, 0, height);
+}
+
+/**
+ * Converts a timestamp value to an x-pixel value and returns the x-pixel value
+ */
+float getXPixelFromTimestamp(long timestamp) {
+  return (timestamp - _currentXMin) / (float)_timeWindowMs * width;
+}
+
+/**
+ * Draws a sensor line with the given color
+ */
+void drawSensorLine(color col, long timestamp1, int sensorVal1, long timestamp2, int sensorVal2) {
+  stroke(col);
+  strokeWeight(2);
+  float xLastPixelVal = getXPixelFromTimestamp(timestamp1);
+  float yLastPixelVal = getYPixelFromSensorVal(sensorVal1);
+  float xCurPixelVal = getXPixelFromTimestamp(timestamp2);
+  float yCurPixelVal = getYPixelFromSensorVal(sensorVal2); 
+  line(xLastPixelVal, yLastPixelVal, xCurPixelVal, yCurPixelVal);
+}
+
+/**
+ * Draws the graph legend, which is dynamic based on the current sensor values
+ */
 void drawLegend(Rectangle legendRect) {
   color textColor = color(255, 255, 255, 128);
   stroke(textColor);
@@ -157,44 +200,64 @@ void drawLegend(Rectangle legendRect) {
   }
 }
 
+/**
+ * Draws an on-screen annotation for recently recorded annotations
+ */
 void drawGestureRecordingAnnotations() {
   
-  while(_displayGestureAnnotations.size() > 0 && 
-        _displayGestureAnnotations.get(0).hasGestureCompleted() &&
-        _displayGestureAnnotations.get(0).endTimestamp < _currentXMin){
-    _displayGestureAnnotations.remove(0);
+  while(_gestureRecordings.size() > 0 && 
+        _gestureRecordings.get(0).hasGestureCompleted() &&
+        _gestureRecordings.get(0).endTimestamp < _currentXMin){
+    _gestureRecordings.remove(0);
   }
   
-  if(_displayGestureAnnotations.size() <= 0) { return; }
+  if(_gestureRecordings.size() <= 0) { return; }
   
-  for(GestureAnnotation gestureAnnotation : _displayGestureAnnotations){
+  for(GestureRecording gestureRecording : _gestureRecordings){
     textSize(10);
     fill(255);
     stroke(255);
     strokeWeight(1);
     
-    String strGesture = "Gesture: \n" + gestureAnnotation.name;
-    float xPixelStartGesture = getXPixelFromTimestamp(gestureAnnotation.startTimestamp);
+    String strGesture = "Gesture: \n" + gestureRecording.name;
+    float xPixelStartGesture = getXPixelFromTimestamp(gestureRecording.startTimestamp);
     line(xPixelStartGesture, 0, xPixelStartGesture, height);
     text(strGesture, xPixelStartGesture + 2, 20);  
     
-    if(gestureAnnotation.hasGestureCompleted()){
-      String strEndGesture = "Gesture End: \n" + gestureAnnotation.name;
-      float xPixelEndGesture = getXPixelFromTimestamp(gestureAnnotation.endTimestamp);
+    if(gestureRecording.hasGestureCompleted()){
+      String strEndGesture = "Gesture End: \n" + gestureRecording.name;
+      float xPixelEndGesture = getXPixelFromTimestamp(gestureRecording.endTimestamp);
       
       noStroke();
-      fill(255, 255, 255, 50);
+      fill(255, 255, 255, 30);
       rect(xPixelStartGesture, 0, xPixelEndGesture - xPixelStartGesture, height);
       
       stroke(255);
       line(xPixelEndGesture, 0, xPixelEndGesture, height);
+      
+      textSize(10);
+      fill(255);
+      text(gestureRecording.savedFilename, xPixelStartGesture + 2, 50); 
     }
   }
   
 }
 
+void drawInstructions(){
+  textSize(35);
+  String strInstructions = "Hit spacebar to record gesture '" + GESTURES[_curGestureIndex] + "'";
+  float strWidth = textWidth(strInstructions);
+  float strHeight = textAscent() + textDescent();
+
+  fill(255);
+  text(strInstructions, width / 2.0 - strWidth / 2.0, height / 4.0 + strHeight / 2.0 - textDescent());
+}
+
+/**
+ * Controls the gesture recording timer and recording logic (i.e., sets recording flag)
+ */
 void updateAndDrawCountdownTimer() {
-  textSize(50);
+  textSize(60);
 
   long curTimestampMs = System.currentTimeMillis();
   long elapsedTimeMs = curTimestampMs - _timestampStartCountdownMs;
@@ -203,13 +266,13 @@ void updateAndDrawCountdownTimer() {
   // draw center of screen
   String str = "";
   if (countdownTimeSecs <= 0) {
-    str = "Recording!";
+    str = "Recording " + GESTURES[_curGestureIndex]  + "!";
 
     if (!_recordingGesture) {
       _recordingGesture = true;
       _timestampRecordingStarted = curTimestampMs;
-      GestureAnnotation gestureAnnotation = new GestureAnnotation("Baseball Throw", curTimestampMs);
-      _displayGestureAnnotations.add(gestureAnnotation);
+      GestureRecording gestureRecording = new GestureRecording(GESTURES[_curGestureIndex], curTimestampMs);
+      _gestureRecordings.add(gestureRecording);
     }
   } else {
     str = String.format("%d", countdownTimeSecs);
@@ -221,24 +284,9 @@ void updateAndDrawCountdownTimer() {
   text(str, width / 2.0 - strWidth / 2.0, height / 2.0 + strHeight / 2.0 - textDescent());
 }
 
-void drawSensorLine(color col, long timestamp1, int sensorVal1, long timestamp2, int sensorVal2) {
-  stroke(col);
-  strokeWeight(2);
-  float xLastPixelVal = getXPixelFromTimestamp(timestamp1);
-  float yLastPixelVal = getYPixelFromSensorVal(sensorVal1);
-  float xCurPixelVal = getXPixelFromTimestamp(timestamp2);
-  float yCurPixelVal = getYPixelFromSensorVal(sensorVal2); 
-  line(xLastPixelVal, yLastPixelVal, xCurPixelVal, yCurPixelVal);
-}
-
-float getYPixelFromSensorVal(int sensorVal) {
-  return map(sensorVal, MIN_SENSOR_VAL, MAX_SENSOR_VAL, 0, height);
-}
-
-float getXPixelFromTimestamp(long timestamp) {
-  return (timestamp - _currentXMin) / (float)_timeWindowMs * width;
-}
-
+/**
+ * Called automatically when a key is pressed. We use this to capture the spacebar keypress (used to start/stop)
+ */
 void keyPressed() {
   if (key == ' ') { 
     if (_recordingGesture) {
@@ -246,9 +294,22 @@ void keyPressed() {
       _recordingGesture = false;
       _timestampStartCountdownMs = -1;
       long currentTimestampMs = System.currentTimeMillis();
-      GestureAnnotation curGestureRecording = _displayGestureAnnotations.get(_displayGestureAnnotations.size() - 1);
+      GestureRecording curGestureRecording = _gestureRecordings.get(_gestureRecordings.size() - 1);
       curGestureRecording.endTimestamp = currentTimestampMs;
       curGestureRecording.save();
+      
+      if(!_mapGestureNameToRecordedCount.containsKey(curGestureRecording.name)){ //<>//
+        _mapGestureNameToRecordedCount.put(curGestureRecording.name, 1);
+      }else{
+        int curRecordingCntForGesture = (int)_mapGestureNameToRecordedCount.get(curGestureRecording.name);
+        int newRecordingCntForGesture = curRecordingCntForGesture + 1;
+        _mapGestureNameToRecordedCount.put(curGestureRecording.name, newRecordingCntForGesture);
+        
+        if(newRecordingCntForGesture >= NUM_SAMPLES_TO_RECORD_PER_GESTURE){
+           _curGestureIndex++; 
+        }
+      }
+       
     } else {
       // start countdown timer
       _timestampStartCountdownMs = System.currentTimeMillis();
@@ -279,14 +340,19 @@ void serialEvent (Serial myPort) {
       }
 
       AccelSensorData accelSensorData = new AccelSensorData(currentTimestampMs, data[0], data[1], data[2]);
-      //println(accelSensorData);
+      
+      if(_recordingGesture){
+        GestureRecording curGestureRecording = _gestureRecordings.get(_gestureRecordings.size() - 1);
+        curGestureRecording.listSensorData.add(accelSensorData);
+      }
+      
       _displaySensorData.add(accelSensorData);
 
       // Remove data that is no longer relevant to be displayed
       while(_displaySensorData.get(0).timestamp < _currentXMin){
         _displaySensorData.remove(0);
       }
-
+     
       _printWriterAllData.println(accelSensorData.toCsvString());
       
       redraw();
@@ -297,14 +363,16 @@ void serialEvent (Serial myPort) {
   }
 }
 
-class GestureAnnotation{ // change name
+class GestureRecording{
   public long startTimestamp;
   public long endTimestamp = -1;
   public String name;
+  public String savedAbsolutePath;
+  public String savedFilename;
   
   ArrayList<AccelSensorData> listSensorData =  new ArrayList<AccelSensorData>();
   
-  public GestureAnnotation(String gestureName, long startTimestamp){
+  public GestureRecording(String gestureName, long startTimestamp){
     this.name = gestureName;
     this.startTimestamp = startTimestamp;
   }
@@ -320,8 +388,8 @@ class GestureAnnotation{ // change name
     if(!fDir.exists()){
       fDir.mkdirs(); 
     }
-    File file = new File(fDir,filenameNoPath); 
-       
+    File file = new File(fDir, filenameNoPath); 
+    
     try {
       PrintWriter printWriter = new PrintWriter(new BufferedWriter(new FileWriter(file, false)));
       printWriter.println(AccelSensorData.CSV_HEADER);
@@ -330,6 +398,8 @@ class GestureAnnotation{ // change name
       }
       printWriter.flush();
       printWriter.close();
+      this.savedAbsolutePath = file.getAbsolutePath();
+      this.savedFilename = file.getName();
     }catch (IOException e){
       e.printStackTrace();
     }
