@@ -1,13 +1,11 @@
 /**
- * This example shows how the screen coordinates are oriented in Processing. The
- * top-left corner of the window is 0,0 and bottom-right is (width, height) so
- * higher x values move right and higher y values move down.
+ * Records accelerometer-based gestures. Works with the Arduino program
+ * ADXL335GestureRecorder.ino (or something similar that provides a CSV input 
+ * stream on the serial port of "timestamp, x, y, z")
  *   
  * By Jon Froehlich
  * http://makeabilitylab.io
  * 
- *
- *
  * TODO:
  * - [done] Hit space to start and stop. When starting, counts down from 3, 2, 1
  * - [done] Status is shown in big letters
