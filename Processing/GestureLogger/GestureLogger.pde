@@ -1,24 +1,34 @@
-// - GUI to select which gesture. Have nothing as a gesture?
-// - Hit space to start and stop. When starting, counts down from 3, 2, 1
-// - Status is shown in big letters
-// - Saves both fullstream plus presegmented?
-// - Shows capture snapshot?
-// - Maybe save Arduino time, Processing timestamp too?
-// - Draw axes? If so, need rectangular boundary to draw data < full width/height of window
-// - Write out save file name after gesture finished recording? Maybe put in GestureAnnotation overlay
-// - [Fixed] Looks like data not being removed from array
-// - When the window is closed (or closing), flush the printwriter and close it
-
-// Appending text to a file: 
-//  - https://stackoverflow.com/questions/17010222/how-do-i-append-text-to-a-csv-txt-file-in-processing
-//  - https://docs.oracle.com/javase/7/docs/api/java/io/FileWriter.html
-//  - Use sketchPath(string) to store in local sketch folder: https://stackoverflow.com/a/36531925
+/**
+ * This example shows how the screen coordinates are oriented in Processing. The
+ * top-left corner of the window is 0,0 and bottom-right is (width, height) so
+ * higher x values move right and higher y values move down.
+ *   
+ * By Jon Froehlich
+ * http://makeabilitylab.io
+ * 
+ *
+ *
+ * TODO:
+ * - [done] Hit space to start and stop. When starting, counts down from 3, 2, 1
+ * - [done] Status is shown in big letters
+ * - [done] Saves both full sensor stream plus presegmented?
+ * - [done] Maybe save Arduino time, Processing timestamp too?
+ * - [done] Write out save file name after gesture finished recording? Maybe put in GestureAnnotation overlay
+ * Future ideas:
+ * - Shows capture snapshot?
+ * - GUI to select which gesture to record
+ * - Draw axes? If so, need rectangular boundary to draw data < full width/height of window
+ * - When the window is closed (or closing), flush the printwriter and close it (to ensure all of the fulldata.csv is saved)?
+ */
+ 
 import processing.serial.*;
 import java.awt.Rectangle;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 
 final String GESTURE_DIR_NAME = "Gestures";
+final String FULL_DATASTREAM_RECORDING_FILENAME = "fulldatastream.csv";
+
 final int YAXIS_MIN = 0; // minimum y value to graph
 final int YAXIS_MAX = 1023; // maximum y value to graph
 final color XCOLOR = color(255, 61, 0, 200);
@@ -26,38 +36,35 @@ final color YCOLOR = color(73, 164, 239, 200);
 final color ZCOLOR = color(255, 183, 0, 200);
 final color [] SENSOR_VALUE_COLORS = { XCOLOR, YCOLOR, ZCOLOR };
 final color DEFAULT_BACKGROUND_COLOR = color(44, 42, 41);
-//final color RECORDING_BACKGROUND_COLOR = color(255, 222, 222);
 final color RECORDING_BACKGROUND_COLOR = color(80, 0, 0);
+final int DISPLAY_TIMEWINDOW_MS = 1000 * 30; // 30 secs
 
 final int MIN_SENSOR_VAL = 0;
 final int MAX_SENSOR_VAL = 1023;
 final int ARDUINO_SERIAL_PORT_INDEX = 3; // our serial port index
 
 final int NUM_SAMPLES_TO_RECORD_PER_GESTURE = 2;
-final String [] GESTURES = { "Backhand Tennis", "Forehand Tennis", "Underhand Bowling", 
-                             "Baseball Throw", "Midair Clockwise 'O'", "At Rest", "Midair Counter-clockwise 'O'",
-                             "Midair Zorro 'Z'", "Midair 'S'", "Shake", "Custom" };
+
+final String [] GESTURES = { "Backhand Tennis", "Forehand Tennis" };
+//, "Underhand Bowling", 
+//                             "Baseball Throw", "Midair Clockwise 'O'", "At Rest", "Midair Counter-clockwise 'O'",
+//                             "Midair Zorro 'Z'", "Midair 'S'", "Shake", "Custom" };
 int _curGestureIndex = 0;
-HashMap<String, Integer> _mapGestureNameToRecordedCount = new HashMap<String, Integer>();
+HashMap<String, Integer> _mapGestureNameToRecordedCount = new HashMap<String, Integer>(); // tracks recorded gesture counts
+ArrayList<AccelSensorData> _displaySensorData =  new ArrayList<AccelSensorData>(); // sensor data displayed to screen
+ArrayList<GestureRecording> _gestureRecordings = new ArrayList<GestureRecording>(); // sensor data to dump to file
+PrintWriter _printWriterAllData;
 
 // The serial port is necessary to read data in from the Arduino
 Serial _serialPort;
 
-final int _timeWindowMs = 1000 * 30; // 30 secs
-long _currentXMin;
-ArrayList<AccelSensorData> _displaySensorData =  new ArrayList<AccelSensorData>();
-ArrayList<GestureRecording> _gestureRecordings = new ArrayList<GestureRecording>();
+long _currentXMin; // the far left x-axis value on the graph
 
-PrintWriter _printWriterAllData;
+final int COUNTDOWN_TIME_MS = 4 * 1000; // how long to show a countdown timer before recording a gesture
+long _timestampStartCountdownMs = -1; // timestamp of when the countdown timer was started
+boolean _recordingGesture = false; // true if we are currently recording a gesture, false otherwise
 
-//GestureRecording _gestureRecording = null
-
-final int COUNTDOWN_TIME_MS = 4 * 1000;
-long _timestampStartCountdownMs = -1;
-boolean _recordingGesture = false;
-long _timestampRecordingStarted = -1;
-
-Rectangle _legendRect;
+Rectangle _legendRect; // location and drawing area of the legend
 
 void setup() {
   size(1024, 576);
@@ -68,7 +75,7 @@ void setup() {
   // Don't generate a serialEvent() unless you get a newline character:
   _serialPort.bufferUntil('\n');
 
-  _currentXMin = System.currentTimeMillis() - _timeWindowMs;
+  _currentXMin = System.currentTimeMillis() - DISPLAY_TIMEWINDOW_MS;
 
   int legendHeight = 60;
   int legendWidth = 200;
@@ -78,14 +85,19 @@ void setup() {
   //_legendRect = new Rectangle(width - legendWidth - legendXBuffer, legendYBuffer, legendWidth, legendHeight); // legend at top-right
   _legendRect = new Rectangle(legendXBuffer, legendYBuffer, legendWidth, legendHeight); // legend at top-left
   
-  String filenameNoPath = "fulldata.csv";
+  String filenameNoPath = FULL_DATASTREAM_RECORDING_FILENAME;
   File fDir = new File(sketchPath(GESTURE_DIR_NAME));
   if(!fDir.exists()){
     fDir.mkdirs(); 
   }
-  File file = new File(fDir,filenameNoPath); 
+  File file = new File(fDir, filenameNoPath); 
      
   try {
+    // We save all incoming sensor data to a file (by appending)
+    // Appending text to a file: 
+    //  - https://stackoverflow.com/questions/17010222/how-do-i-append-text-to-a-csv-txt-file-in-processing
+    //  - https://docs.oracle.com/javase/7/docs/api/java/io/FileWriter.html
+    //  - Use sketchPath(string) to store in local sketch folder: https://stackoverflow.com/a/36531925
     _printWriterAllData = new PrintWriter(new BufferedWriter(new FileWriter(file, true)));
   }catch (IOException e){
     e.printStackTrace();
@@ -140,7 +152,7 @@ float getYPixelFromSensorVal(int sensorVal) {
  * Converts a timestamp value to an x-pixel value and returns the x-pixel value
  */
 float getXPixelFromTimestamp(long timestamp) {
-  return (timestamp - _currentXMin) / (float)_timeWindowMs * width;
+  return (timestamp - _currentXMin) / (float)DISPLAY_TIMEWINDOW_MS * width;
 }
 
 /**
@@ -249,9 +261,17 @@ void drawGestureRecordingAnnotations() {
  */
 void drawInstructions(){
   textSize(30);
-  int sampleNum = getNumGesturesRecordedWithName(GESTURES[_curGestureIndex]) + 1;
-  String strInstructions = "Hit spacebar to record Sample " + sampleNum + "/" + NUM_SAMPLES_TO_RECORD_PER_GESTURE 
-                            + " of gesture '" + GESTURES[_curGestureIndex] + "'";
+  
+  String strInstructions = "";
+  
+  if(_curGestureIndex < GESTURES.length){
+    int sampleNum = getNumGesturesRecordedWithName(GESTURES[_curGestureIndex]) + 1;
+    strInstructions = "Hit spacebar to record Sample " + sampleNum + "/" + NUM_SAMPLES_TO_RECORD_PER_GESTURE 
+                              + " of gesture '" + GESTURES[_curGestureIndex] + "'";
+  }else{
+    strInstructions = "You did it! Gesture recording completed!";
+  }
+  
   float strWidth = textWidth(strInstructions);
   float strHeight = textAscent() + textDescent();
 
@@ -280,7 +300,6 @@ void updateAndDrawCountdownTimer() {
 
     if (!_recordingGesture) {
       _recordingGesture = true;
-      _timestampRecordingStarted = curTimestampMs;
       GestureRecording gestureRecording = new GestureRecording(GESTURES[_curGestureIndex], curTimestampMs);
       _gestureRecordings.add(gestureRecording);
     }
@@ -322,8 +341,10 @@ void keyPressed() {
       }
        
     } else {
-      // start countdown timer
-      _timestampStartCountdownMs = System.currentTimeMillis();
+      if(_curGestureIndex < GESTURES.length){
+        // if there are still gestures left to record, start countdown timer
+        _timestampStartCountdownMs = System.currentTimeMillis();
+      }
     }
   }
 }
@@ -339,7 +360,7 @@ int getNumGesturesRecordedWithName(String name){
 // See: https://processing.org/reference/libraries/serial/serialEvent_.html
 void serialEvent (Serial myPort) {
   long currentTimestampMs = System.currentTimeMillis();
-  _currentXMin = currentTimestampMs - _timeWindowMs;
+  _currentXMin = currentTimestampMs - DISPLAY_TIMEWINDOW_MS;
 
   try {
     // Grab the data off the serial port. See: 
