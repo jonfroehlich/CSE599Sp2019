@@ -27,7 +27,7 @@ final color ZCOLOR = color(255, 183, 0, 200);
 final color [] SENSOR_VALUE_COLORS = { XCOLOR, YCOLOR, ZCOLOR };
 final color DEFAULT_BACKGROUND_COLOR = color(44, 42, 41);
 //final color RECORDING_BACKGROUND_COLOR = color(255, 222, 222);
-final color RECORDING_BACKGROUND_COLOR = color(40, 0, 0);
+final color RECORDING_BACKGROUND_COLOR = color(80, 0, 0);
 
 final int MIN_SENSOR_VAL = 0;
 final int MAX_SENSOR_VAL = 1023;
@@ -108,7 +108,7 @@ void draw() {
   //  circle(50,50,circleSize);
   //}
 
-  println("Drawing! _displaySensorData.size()=" + _displaySensorData.size() + " _timeWindowMs=" + _timeWindowMs);
+  //println("Drawing! _displaySensorData.size()=" + _displaySensorData.size() + " _timeWindowMs=" + _timeWindowMs);
   for (int i = 1; i < _displaySensorData.size(); i++) {
     AccelSensorData lastAccelSensorData = _displaySensorData.get(i - 1);
     AccelSensorData curAccelSensorData = _displaySensorData.get(i);
@@ -219,7 +219,8 @@ void drawGestureRecordingAnnotations() {
     stroke(255);
     strokeWeight(1);
     
-    String strGesture = "Gesture: \n" + gestureRecording.name;
+    String strGesture = "Gesture " + (gestureRecording.hasGestureCompleted() ? "Completed:" : "Active:") 
+                        + "\n" + gestureRecording.name;
     float xPixelStartGesture = getXPixelFromTimestamp(gestureRecording.startTimestamp);
     line(xPixelStartGesture, 0, xPixelStartGesture, height);
     text(strGesture, xPixelStartGesture + 2, 20);  
@@ -243,9 +244,14 @@ void drawGestureRecordingAnnotations() {
   
 }
 
+/**
+ * Writes out basic instructions for the user
+ */
 void drawInstructions(){
-  textSize(35);
-  String strInstructions = "Hit spacebar to record gesture '" + GESTURES[_curGestureIndex] + "'";
+  textSize(30);
+  int sampleNum = getNumGesturesRecordedWithName(GESTURES[_curGestureIndex]) + 1;
+  String strInstructions = "Hit spacebar to record Sample " + sampleNum + "/" + NUM_SAMPLES_TO_RECORD_PER_GESTURE 
+                            + " of gesture '" + GESTURES[_curGestureIndex] + "'";
   float strWidth = textWidth(strInstructions);
   float strHeight = textAscent() + textDescent();
 
@@ -257,16 +263,20 @@ void drawInstructions(){
  * Controls the gesture recording timer and recording logic (i.e., sets recording flag)
  */
 void updateAndDrawCountdownTimer() {
-  textSize(60);
-
+  
+  fill(255);
+  
   long curTimestampMs = System.currentTimeMillis();
   long elapsedTimeMs = curTimestampMs - _timestampStartCountdownMs;
   int countdownTimeSecs = (int)((COUNTDOWN_TIME_MS - elapsedTimeMs) / 1000.0);
 
   // draw center of screen
-  String str = "";
+  String str = ""; 
   if (countdownTimeSecs <= 0) {
-    str = "Recording " + GESTURES[_curGestureIndex]  + "!";
+    textSize(40);
+    float strHeight = textAscent() + textDescent();
+    int sampleNum = getNumGesturesRecordedWithName(GESTURES[_curGestureIndex]) + 1;
+    str = "Recording Sample " + sampleNum + "/" + NUM_SAMPLES_TO_RECORD_PER_GESTURE + " of '" + GESTURES[_curGestureIndex]  + "'!";
 
     if (!_recordingGesture) {
       _recordingGesture = true;
@@ -274,14 +284,15 @@ void updateAndDrawCountdownTimer() {
       GestureRecording gestureRecording = new GestureRecording(GESTURES[_curGestureIndex], curTimestampMs);
       _gestureRecordings.add(gestureRecording);
     }
+    float strWidth = textWidth(str);
+    text(str, width / 2.0 - strWidth / 2.0, height * 0.75 + strHeight / 2.0 - textDescent());
   } else {
+    textSize(80);
+    float strHeight = textAscent() + textDescent();
     str = String.format("%d", countdownTimeSecs);
+    float strWidth = textWidth(str);
+    text(str, width / 2.0 - strWidth / 2.0, height / 2.0 + strHeight / 2.0 - textDescent());
   }
-  float strWidth = textWidth(str);
-  float strHeight = textAscent() + textDescent();
-
-  fill(255);
-  text(str, width / 2.0 - strWidth / 2.0, height / 2.0 + strHeight / 2.0 - textDescent());
 }
 
 /**
@@ -317,6 +328,13 @@ void keyPressed() {
   }
 }
 
+/**
+ * Convenience method that returns the number of gestures recoreded with the given name
+ */
+int getNumGesturesRecordedWithName(String name){
+  return _mapGestureNameToRecordedCount.containsKey(name) ? (int)_mapGestureNameToRecordedCount.get(name) : 0;
+}
+
 // Called automatically when there is data on the serial port
 // See: https://processing.org/reference/libraries/serial/serialEvent_.html
 void serialEvent (Serial myPort) {
@@ -339,7 +357,7 @@ void serialEvent (Serial myPort) {
         data = new int[] { int(inString) };
       }
 
-      AccelSensorData accelSensorData = new AccelSensorData(currentTimestampMs, data[0], data[1], data[2]);
+      AccelSensorData accelSensorData = new AccelSensorData(currentTimestampMs, data[0], data[1], data[2], data[3]);
       
       if(_recordingGesture){
         GestureRecording curGestureRecording = _gestureRecordings.get(_gestureRecordings.size() - 1);
@@ -408,7 +426,7 @@ class GestureRecording{
 
 // Class for the accelerometer data
 class AccelSensorData {
-  public final static String CSV_HEADER = "Arduino Timestamp (ms), Processing Timestamp (ms), X, Y, Z";
+  public final static String CSV_HEADER = "Processing Timestamp (ms), Arduino Timestamp (ms), X, Y, Z";
   
   public int x;
   public int y;
@@ -416,8 +434,9 @@ class AccelSensorData {
   public long timestamp;
   public long arduinoTimestamp;
 
-  public AccelSensorData(long timestamp, int x, int y, int z) {
+  public AccelSensorData(long timestamp, long arduinoTimestamp, int x, int y, int z) {
     this.timestamp = timestamp;
+    this.arduinoTimestamp = arduinoTimestamp;
     this.x = x;
     this.y = y;
     this.z = z;
@@ -425,7 +444,7 @@ class AccelSensorData {
   
   // Creates a dynamic array on every call
   public int[] getSensorValues(){
-    return new int[] {this.x, this.y, this.z};
+    return new int[] { this.x, this.y, this.z };
   }
   
   public String toCsvHeaderString(){
@@ -433,7 +452,7 @@ class AccelSensorData {
   }
   
   public String toCsvString(){
-    return String.format("%d, %d, %d, %d, %d", this.arduinoTimestamp, this.timestamp, this.x, this.y, this.z);
+    return String.format("%d, %d, %d, %d, %d", this.timestamp, this.arduinoTimestamp, this.x, this.y, this.z);
   }
 
   public String toString() { 
