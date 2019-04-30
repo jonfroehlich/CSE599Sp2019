@@ -45,5 +45,22 @@ In this repository, we host example code and lecture PDFs (please email me for t
 - A1: Interactive Night Light share outs
 - Intro to A2: 3D-Printed Interactive Night Light
 
+### [Lecture 07: Prototyping Form 1: 3D Modeling + Printing](https://github.com/jonfroehlich/CSE599Sp2019/blob/master/Lectures/CSE599_L07-PrototypingForm-3DPrinting.pdf)
+- Rapid **end-to-end demonstration** of CAD modeling + 3D printing
+- How **CAD tools** + **3D printing** can be used to rapidly prototype form 
+- An introduction to two primary 3D printing methods: **SLA** and **FDM**
+- The **3D printing pipeline**
+- Modeling designs in **Fusion 360**
+- What is **slicing** and what do we use it for
+
+### [Lecture 08: Prototyping Form 2: Fusion 360](https://github.com/jonfroehlich/CSE599Sp2019/blob/master/Lectures/CSE599_L08-PrototypingForm2-Fusion360.pdf)
+- Sketching: How to **move** objects 
+- Sketching: How to **resize** objects 
+- Sketching: What are **construction lines**? 
+- Sketching: How to use **constraints**
+- 3D: How to **import** 3D objects
+- 3D: How to **project** from 3D to 2D
+- 3D: How to use **revolve** and **circular patterns**
+
 
 
