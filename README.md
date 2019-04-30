@@ -41,4 +41,9 @@ In this repository, we host example code and lecture PDFs (please email me for t
 - What are **variable resistive sensors** and how to use them?
 - Understanding the **importance of voltage dividers** when working with analog input (and the relevancy of Ohm’s law!)
 
+### [Lecture 06: A1 Share Outs & Intro to A2](https://github.com/jonfroehlich/CSE599Sp2019/blob/master/Lectures/CSE599_L06-A1ShareOutsAndA2Assignment.pdf)
+- A1: Interactive Night Light share outs
+- Intro to A2: 3D-Printed Interactive Night Light
+
+
 
