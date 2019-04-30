@@ -1,4 +1,5 @@
 ## CSE599 Prototyping Interactive Systems
+![Example assignments and projects from previous incarnations of this course: CMSC838f at UMD](https://github.com/jonfroehlich/CSE599Sp2019/blob/master/docs/ExampleAssignmentsAndProjects.jpg "Example assignments and projects")
 
 ## Lectures
 ### [Lecture 01: Prototyping Interactive Systems](https://github.com/jonfroehlich/CSE599Sp2019/blob/master/Lectures/CSE599_L01-PrototypingInteractiveSystems.pdf)
