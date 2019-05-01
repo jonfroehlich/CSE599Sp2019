@@ -62,5 +62,15 @@ In this repository, we host example code and lecture PDFs (please email me for t
 - 3D: How to **project** from 3D to 2D
 - 3D: How to use **revolve** and **circular patterns**
 
+### [Lecture 09: Prototyping Form 3: Wire Tools and Soldering](https://github.com/jonfroehlich/CSE599Sp2019/blob/master/Lectures/CSE599_L09-PrototypingForm3-WireToolsAndSoldering.pdf)
+- Intro to **wires**
+- Intro to basic **electronic hand tools**
+- How to **solder**
+- How to use a **perfboard**
+- Design activity: build an **LED flashlight** with a **perfboard**
+- (If time) **Solder** header pins on **ADXL335** accelerometer
+- Ken Yasuhara from Engineering Teaching and Learning Center
+
+
 
 
