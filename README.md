@@ -71,6 +71,24 @@ In this repository, we host example code and lecture PDFs (please email me for t
 - (If time) **Solder** header pins on **ADXL335** accelerometer
 - Ken Yasuhara from Engineering Teaching and Learning Center
 
+### [Lecture 10a: A2 Share Outs and A3 Assignment](https://github.com/jonfroehlich/CSE599Sp2019/blob/master/Lectures/CSE599_L10-A2ShareOutsAndA3Assignment.pdf)
+- A2: 3D-Printed Interactive Night Light share outs
+- Intro to A3: Shape-Matching Gesture Recognizer
+
+### [Lecture 10ba: Prototyping Process 2: How to Approach Prototyping](https://github.com/jonfroehlich/CSE599Sp2019/blob/master/Lectures/CSE599_L10-PrototypingProcess_Part2.pdf)
+- Ideation and getting the **design right** and the **right design**
+- Ideation process as a tree and process of **elaboration+reduction**
+- When to prototype: "ABP: **Always Be Prototyping**"
+- The importance of **exploring a breadth of ideas**
+- Focus on **rapidly building prototypes** to explore design space
+- Perceived **fidelity of prototypes** can impact responses
+- **Iteration** is critical
+- Prototype multiple designs in **parallel**
+- **Show/test multiple prototypes** to enable comparison
+
+
+
+
 
 
 
