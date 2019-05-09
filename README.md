@@ -86,6 +86,20 @@ In this repository, we host example code and lecture PDFs (please email me for t
 - Prototype multiple designs in **parallel**
 - **Show/test multiple prototypes** to enable comparison
 
+### [Lecture 11: Applied Signal Processing and Machine Learning 1: Acquiring the Signal](https://github.com/jonfroehlich/CSE599Sp2019/blob/master/Lectures/CSE599_L11-AppliedSPandML1-AcquiringTheSignal.pdf)
+- How do we **acquire sensor data** (i.e., signal acquisition)?
+- What is a **time-series signal** and how do we represent them?
+- **Decomposing** and **synthesizing** signals
+
+### [Lecture 12: Applied Signal Processing and Machine Learning 2: Analyzing the Signal](https://github.com/jonfroehlich/CSE599Sp2019/blob/master/Lectures/CSE599_L12-AppliedSPandML2-AnalyzingTheSignal.pdf)
+- Basic **signal processing** strategies
+- How to **compare two signals** using 'shape matching'
+- **General approaches** in HCI/Ubicomp for processing and classifying signals
+- Example from a research project: [**HydroSense**](https://github.com/jonfroehlich/CSE599Sp2019/blob/master/Lectures/CSE599_L12-AppliedSPandML2-HydroSense.pdf)
+- How to approach **A3**
+- Jupyter Notebook exercises and **A3 worktime**
+
+
 
 
 
