@@ -66,6 +66,12 @@ Rectangle _legendRect; // location and drawing area of the legend
 void setup() {
   size(1024, 576);
 
+  //
+  // Print to console all the available serial ports
+  print("**All Available Serial Ports**");
+  printArray(Serial.list());
+  print("Make sure to change ARDUINO_SERIAL_PORT_INDEX to the correct port number!");
+
   // Open the serial port
   _serialPort = new Serial(this, Serial.list()[ARDUINO_SERIAL_PORT_INDEX], 9600);
 
