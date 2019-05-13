@@ -253,7 +253,13 @@ void drawGestureRecordingAnnotations() {
       
       textSize(10);
       fill(255);
-      text(gestureRecording.savedFilename, xPixelStartGesture + 2, 50); 
+      
+      // null check on savedfilename
+      // this is because a gesture might be completed but the save to file might not be done
+      // see: https://github.com/jonfroehlich/CSE599Sp2019/issues/1
+      if(gestureRecording.savedFilename != null){
+        text(gestureRecording.savedFilename, xPixelStartGesture + 2, 50); 
+      }
     }
   }
   
