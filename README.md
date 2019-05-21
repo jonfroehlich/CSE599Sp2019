@@ -109,6 +109,22 @@ For the applied signal processing and machine learning parts of the course, I've
 - How to approach **A3**
 - Jupyter Notebook exercises and **A3 worktime**
 
+### [Lecture 13: In-Class Exercises and Project Checkin]
+- Went over some [tutorial notebooks](https://github.com/jonfroehlich/CSE599Sp2019/tree/master/Notebooks)
+- Project checkins
+- In-class work time on A3
+
+### [Lecture 14: Applied Signal Processing and Machine Learning 3: A3 Shares Outs, A4 Assignment, and Intro to Model-Based Approaches](https://github.com/jonfroehlich/CSE599Sp2019/blob/master/Lectures/CSE599_L14-AppliedSPandML3-IntroToModelBased.pdf)
+- **A3 reflection.** What worked? What didn’t? Challenges? Solutions?
+- Quick intro to **model-based approaches**
+- JupyterNotebook exercises with [SVMGestureRecognizer ipynb](https://github.com/jonfroehlich/CSE599Sp2019/blob/master/Assignments/A4-SVMGestureRecognizer/SVMGestureRecognizer.ipynb)
+
+### [Lecture 15: Applied Signal Processing and Machine Learning 4: A3 Shares Outs, A4 Assignment, and Intro to Model-Based Approaches](https://github.com/jonfroehlich/CSE599Sp2019/blob/master/Lectures/CSE599_L15-AppliedSPandML4-ScikitLearn.pdf)
+- Using **machine learning toolkits** like scikit-learn
+- The **scikit-learn ML framework**
+- How the **K Nearest Neighbor ( kNN )** classification model works
+- How the **Support Vector Machine (SVM)** classification model works
+- Briefly: feature selection , feature scaling , parameter tuning
 
 
 
