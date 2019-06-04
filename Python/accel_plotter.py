@@ -97,8 +97,8 @@ class AccelPlot:
 
 
 def main():
-	# python serial_plotter.py --port /dev/cu.usbmodem14601
-	# windows: python lserial_plotter.py --port COM5	
+    # python serial_plotter.py --port /dev/cu.usbmodem14601
+    # windows: python serial_plotter.py --port COM5	
     # create parser
     parser = argparse.ArgumentParser(description="Accel Serial Plotter")
 
