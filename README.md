@@ -7,12 +7,13 @@ In this repository, we host example code and lecture PDFs (please email me for t
 ## Jupyter Notebooks
 [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/jonfroehlich/CSE599Sp2019/master)
 
-For the applied signal processing and machine learning parts of the course, I've begun creating tutorial notebooks in Jupyter Notebook. You can play with [interactive versions](https://mybinder.org/v2/gh/jonfroehlich/CSE599Sp2019/master) in the cloud, view static versions in your browser (github has a static viewer), or download the ipynb files and run them locally on your machine.
+For the applied signal processing and machine learning parts of the course, I've begun creating tutorial notebooks in Jupyter Notebook. You can play with [interactive versions](https://mybinder.org/v2/gh/jonfroehlich/CSE599Sp2019/master) in the cloud, view static versions in your browser (github has a static viewer), or download the ipynb files and run them locally on your machine. Because they are new, expect some draftiness and frequent updates.
 
 - [MyFirstNotebook.ipynb](https://github.com/jonfroehlich/CSE599Sp2019/blob/master/Notebooks/MyFirstNotebook.ipynb), which was used in class to introduce students to the basics of Jupyter Notebook (*e.g.,* cells, execution)
 - [PythonTutorial.ipynb](https://github.com/jonfroehlich/CSE599Sp2019/blob/master/Notebooks/PythonTutorial.ipynb): we use lots of programming languages in this class. This notebook is intended to be a quick Python primer (and refresher).
 - [MatplotlibPyplotTutorial.ipynb](https://github.com/jonfroehlich/CSE599Sp2019/blob/master/Notebooks/MatplotlibPyplotTutorial.ipynb): matplotlib is the Python-based visualization framework we will be using in class
 - [NumpyTutorial.ipynb](https://github.com/jonfroehlich/CSE599Sp2019/blob/master/Notebooks/NumpyTutorial.ipynb): numpy is a popular library for processing array/matrix data in scientific computing and data science
+- [PlayingWithSignals.ipynb](https://github.com/jonfroehlich/CSE599Sp2019/blob/master/Notebooks/PlayingWithSignals.ipynb): an initial notebook to illustrate basic signal processing and signal comparison using numpy and scipy.
 
 ## Lectures
 ### [Lecture 01: Prototyping Interactive Systems](https://github.com/jonfroehlich/CSE599Sp2019/blob/master/Lectures/CSE599_L01-PrototypingInteractiveSystems.pdf)
