@@ -127,7 +127,19 @@ For the applied signal processing and machine learning parts of the course, I've
 - How the **Support Vector Machine (SVM)** classification model works
 - Briefly: feature selection , feature scaling , parameter tuning
 
+### Lecture 16: Project Feedback and Work Time
+- Project walkarounds and feedback from Jasper and Jon
 
+### [Lecture 17: A4 Share Outs and Evaluating Models with Scikit](https://github.com/jonfroehlich/CSE599Sp2019/blob/master/Lectures/CSE599_L17-A4ShareOutsAndKFoldInScikit.pdf)
+- **A4 Share Outs** How well did your models perform? What input features did you use? How did you choose?
+- **K-Fold Cross-Validation** We used custom code for k-fold, what if we used scikit-learn's built-in functionality?
+
+### [Lecture 18: Feature Selection and Parameter Tuning]
+(https://github.com/jonfroehlich/CSE599Sp2019/blob/master/Lectures/CSE599_L18-FeatureSelectionAndParameterTuning.pdf)
+- Quick intro to **Pandas** to make it easier to analyze and visualize input features
+- Using Pandas **describe()**, **hist()**, **scatter_matrix()**, and **corr()**
+- How do we choose input features to our model? **Automatic Feature Selection** to the rescue! We cover four main approahces, including **analysis of variance**, **univariate statistics**, **model-based feature selection**, and **iterative model-based feature selection** like recursive feature elimination
+- How do we select the parameters to tune our selected ML model? For example, should we use a linear kernel or a non-linear kernel with an SVM? This is called **parameter tuning** and scikit-learn has support for this too. We will illustrate this using GridSearchCV and an example Jupyter Notebook shared in class.
 
 
 
