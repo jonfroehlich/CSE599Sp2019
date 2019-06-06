@@ -134,12 +134,16 @@ For the applied signal processing and machine learning parts of the course, I've
 - **A4 Share Outs** How well did your models perform? What input features did you use? How did you choose?
 - **K-Fold Cross-Validation** We used custom code for k-fold, what if we used scikit-learn's built-in functionality?
 
-### [Lecture 18: Feature Selection and Parameter Tuning]
-(https://github.com/jonfroehlich/CSE599Sp2019/blob/master/Lectures/CSE599_L18-FeatureSelectionAndParameterTuning.pdf)
+### [Lecture 18: Feature Selection and Parameter Tuning](https://github.com/jonfroehlich/CSE599Sp2019/blob/master/Lectures/CSE599_L18-FeatureSelectionAndParameterTuning.pdf)
 - Quick intro to **Pandas** to make it easier to analyze and visualize input features
 - Using Pandas **describe()**, **hist()**, **scatter_matrix()**, and **corr()**
 - How do we choose input features to our model? **Automatic Feature Selection** to the rescue! We cover four main approahces, including **analysis of variance**, **univariate statistics**, **model-based feature selection**, and **iterative model-based feature selection** like recursive feature elimination
 - How do we select the parameters to tune our selected ML model? For example, should we use a linear kernel or a non-linear kernel with an SVM? This is called **parameter tuning** and scikit-learn has support for this too. We will illustrate this using GridSearchCV and an example Jupyter Notebook shared in class.
+
+### Lecture 19: Project Work Time
+- Project walkarounds and feedback from Jasper
+- See [accel.plotter.py](https://github.com/jonfroehlich/CSE599Sp2019/blob/master/Python/accel_plotter.py) for an example of a real-time Python-based visualization (using matplotlib) of incoming accelerometer data from the Arduino
+- See [gesture_rec.py](https://github.com/jonfroehlich/CSE599Sp2019/blob/master/Python/gesture_rec.py) for a code skeleton showing how to do (simple) real-time segmentation of incoming accelerometer data for gesture recognition
 
 
 
