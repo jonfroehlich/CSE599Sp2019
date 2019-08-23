@@ -14,7 +14,7 @@ In this repository, we host example code and lecture PDFs (please email me for t
 ## Course Curriculum
 While informed by my previous graduate courses—namely, [Tangible Interactive Computing](https://web.archive.org/web/20170605201324/http:/cmsc838f-s15.wikispaces.com/) at UMD and [Ubiquitous Computing](https://github.com/jonfroehlich/CSE590Sp2018) at UW—this is a new class that will be purposefully experimental. For the most part, I will be building the course as we go, which enables freshness, flexibility, and adaptability but at a cost, perhaps, of predictability and polish. For my graduate courses (like this one!), I always try to incorporate new technologies, techniques, and methods--some which are new to me—which means that we will be learning together. :) Optmistically, I plan to cover:
 
-- **Prototyping Interactive Devices**
+- **Prototyping Processes and Rationale**
   - Background and theories about ideation, prototyping, and the science of design
   - When and how to prototype
   - Apply HCI design process to interactive device design from form to function
