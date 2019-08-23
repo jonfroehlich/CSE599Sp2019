@@ -4,7 +4,7 @@ This course explores the materiality and physicality of interactive computing vi
 
 In this repository, we host example code and lecture PDFs (please email me for the raw PowerPoints, which gives you access to animations and the plentiful embedded movies).
 
-Envisioned Course Curriculum
+## Course Curriculum
 While informed by my previous graduate courses—namely, [Tangible Interactive Computing](https://web.archive.org/web/20170605201324/http:/cmsc838f-s15.wikispaces.com/) at UMD and [Ubiquitous Computing](https://github.com/jonfroehlich/CSE590Sp2018) at UW—this is a new class that will be purposefully experimental. For the most part, I will be building the course as we go, which enables freshness, flexibility, and adaptability but at a cost, perhaps, of predictability and polish. For my graduate courses (like this one!), I always try to incorporate new technologies, techniques, and methods--some which are new to me—which means that we will be learning together. :) Optmistically, I plan to cover:
 
 - **Prototyping Interactive Devices**
